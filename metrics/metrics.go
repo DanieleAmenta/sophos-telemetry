@@ -92,6 +92,108 @@ func GetAllAvgAppTraffic(appGroupName, rangeWidth string) (model.Vector, prometh
 	return vector, warnings, err
 }
 
+func GetAvgAppCPU(appGroupName, appName, rangeWidth string) (model.Vector, prometheus.Warnings, error) {
+	prometheusClient, err := newPrometheusClient(prometheusAddress)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create metrics client: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	containerName := appGroupName + "-" + appName
+	result, warnings, err := prometheusClient.Query(ctx, `
+		avg by(container) (rate(container_cpu_usage_seconds_total{container="`+containerName+`"}[`+rangeWidth+`])) * 1000
+	`, time.Now())
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("error during query execution: %v", err)
+	}
+
+	vector, ok := result.(model.Vector)
+
+	if !ok {
+		return nil, nil, fmt.Errorf("query result is not a vector: %v", err)
+	}
+
+	return vector, warnings, err
+}
+
+func GetAllAvgAppCPU(appGroupName, rangeWidth string) (model.Vector, prometheus.Warnings, error) {
+	prometheusClient, err := newPrometheusClient(prometheusAddress)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create metrics client: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	result, warnings, err := prometheusClient.Query(ctx, `
+		avg by(container) (rate(container_cpu_usage_seconds_total{container=~"`+appGroupName+`-.*"}[`+rangeWidth+`])) * 1000
+	`, time.Now())
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("error during query execution: %v", err)
+	}
+
+	vector, ok := result.(model.Vector)
+
+	if !ok {
+		return nil, nil, fmt.Errorf("query result is not a vector: %v", err)
+	}
+
+	return vector, warnings, err
+}
+
+func GetAvgAppMemory(appGroupName, appName, rangeWidth string) (model.Vector, prometheus.Warnings, error) {
+	prometheusClient, err := newPrometheusClient(prometheusAddress)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create metrics client: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	containerName := appGroupName + "-" + appName
+	result, warnings, err := prometheusClient.Query(ctx, `
+		avg by(container) (avg_over_time(container_memory_working_set_bytes{container="`+containerName+`"}[`+rangeWidth+`]) / (1024 * 1024))
+	`, time.Now())
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("error during query execution: %v", err)
+	}
+
+	vector, ok := result.(model.Vector)
+
+	if !ok {
+		return nil, nil, fmt.Errorf("query result is not a vector: %v", err)
+	}
+
+	return vector, warnings, err
+}
+
+func GetAllAvgAppMemory(appGroupName, rangeWidth string) (model.Vector, prometheus.Warnings, error) {
+	prometheusClient, err := newPrometheusClient(prometheusAddress)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create metrics client: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	result, warnings, err := prometheusClient.Query(ctx, `
+		avg by(container) (avg_over_time(container_memory_working_set_bytes{container=~"`+appGroupName+`-.*"}[`+rangeWidth+`]) / (1024 * 1024))
+	`, time.Now())
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("error during query execution: %v", err)
+	}
+
+	vector, ok := result.(model.Vector)
+
+	if !ok {
+		return nil, nil, fmt.Errorf("query result is not a vector: %v", err)
+	}
+
+	return vector, warnings, err
+}
+
 func GetAvgNodeLatencies(nodeName, rangeWidth string) (model.Vector, prometheus.Warnings, error) {
 	prometheusClient, err := newPrometheusClient(prometheusAddress)
 	if err != nil {

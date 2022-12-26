@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/amarchese96/sophos-telemetry/metrics"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -58,6 +59,86 @@ func getAvgAppTraffic(c *gin.Context) {
 	}
 }
 
+func getAvgAppCPU(c *gin.Context) {
+	appGroupName := c.Query("app-group")
+	appName := c.Query("app")
+	rangeWidth := c.Query("range-width")
+
+	if rangeWidth == "" {
+		rangeWidth = "5m"
+	}
+
+	cpuValues := map[string]float64{}
+
+	if appName != "" {
+		results, _, err := metrics.GetAvgAppCPU(appGroupName, appName, rangeWidth)
+
+		//fmt.Println(warnings)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			if len(results) < 1 {
+				c.IndentedJSON(http.StatusNotFound, fmt.Errorf("cpu usage metrics for app %s not found", appName))
+			} else {
+				cpuValues[string(results[0].Metric["container"])] = float64(results[0].Value)
+				c.IndentedJSON(http.StatusOK, cpuValues)
+			}
+		}
+	} else {
+		results, _, err := metrics.GetAllAvgAppCPU(appGroupName, rangeWidth)
+
+		//fmt.Println(warnings)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			for _, result := range results {
+				cpuValues[string(result.Metric["container"])] = float64(result.Value)
+			}
+			c.IndentedJSON(http.StatusOK, cpuValues)
+		}
+	}
+}
+
+func getAvgAppMemory(c *gin.Context) {
+	appGroupName := c.Query("app-group")
+	appName := c.Query("app")
+	rangeWidth := c.Query("range-width")
+
+	if rangeWidth == "" {
+		rangeWidth = "5m"
+	}
+
+	memoryValues := map[string]float64{}
+
+	if appName != "" {
+		results, _, err := metrics.GetAvgAppMemory(appGroupName, appName, rangeWidth)
+
+		//fmt.Println(warnings)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			if len(results) < 1 {
+				c.IndentedJSON(http.StatusNotFound, fmt.Errorf("memory usage metrics for app %s not found", appName))
+			} else {
+				memoryValues[string(results[0].Metric["container"])] = float64(results[0].Value)
+				c.IndentedJSON(http.StatusOK, memoryValues)
+			}
+		}
+	} else {
+		results, _, err := metrics.GetAllAvgAppMemory(appGroupName, rangeWidth)
+
+		//fmt.Println(warnings)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			for _, result := range results {
+				memoryValues[string(result.Metric["container"])] = float64(result.Value)
+			}
+			c.IndentedJSON(http.StatusOK, memoryValues)
+		}
+	}
+}
+
 func getAvgNodeLatencies(c *gin.Context) {
 	nodeName := c.Query("node")
 
@@ -103,6 +184,8 @@ func getAvgNodeLatencies(c *gin.Context) {
 func main() {
 	router := gin.Default()
 	router.GET("/metrics/app/avg-traffic", getAvgAppTraffic)
+	router.GET("/metrics/app/avg-cpu", getAvgAppCPU)
+	router.GET("/metrics/app/avg-memory", getAvgAppMemory)
 	router.GET("/metrics/node/avg-latencies", getAvgNodeLatencies)
 
 	router.Run("0.0.0.0:8080")
