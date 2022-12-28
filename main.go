@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func getAvgAppTraffic(c *gin.Context) {
+func getAppTraffic(c *gin.Context) {
 	appGroupName := c.Query("app-group")
 	appName := c.Query("app")
 	rangeWidth := c.Query("range-width")
@@ -17,13 +17,13 @@ func getAvgAppTraffic(c *gin.Context) {
 	}
 
 	if appName != "" {
-		trafficValues := map[string]float64{}
-		results, _, err := metrics.GetAvgAppTraffic(appGroupName, appName, rangeWidth)
+		results, _, err := metrics.GetAppTraffic(appGroupName, appName, rangeWidth)
 
 		//fmt.Println(warnings)
 		if err != nil {
 			c.IndentedJSON(http.StatusInternalServerError, err)
 		} else {
+			trafficValues := map[string]float64{}
 			for _, result := range results {
 				if string(result.Metric["source_app"]) == appName {
 					trafficValues[string(result.Metric["destination_app"])] = float64(result.Value)
@@ -34,13 +34,13 @@ func getAvgAppTraffic(c *gin.Context) {
 			c.IndentedJSON(http.StatusOK, trafficValues)
 		}
 	} else {
-		trafficValues := map[string]map[string]float64{}
-		results, _, err := metrics.GetAllAvgAppTraffic(appGroupName, rangeWidth)
+		results, _, err := metrics.GetAllAppTraffic(appGroupName, rangeWidth)
 
 		//fmt.Println(warnings)
 		if err != nil {
 			c.IndentedJSON(http.StatusInternalServerError, err)
 		} else {
+			trafficValues := map[string]map[string]float64{}
 			for _, result := range results {
 				_, ok := trafficValues[string(result.Metric["source_app"])]
 				if !ok {
@@ -59,7 +59,7 @@ func getAvgAppTraffic(c *gin.Context) {
 	}
 }
 
-func getAvgAppCPU(c *gin.Context) {
+func getAppCPU(c *gin.Context) {
 	appGroupName := c.Query("app-group")
 	appName := c.Query("app")
 	rangeWidth := c.Query("range-width")
@@ -68,10 +68,8 @@ func getAvgAppCPU(c *gin.Context) {
 		rangeWidth = "5m"
 	}
 
-	cpuValues := map[string]float64{}
-
 	if appName != "" {
-		results, _, err := metrics.GetAvgAppCPU(appGroupName, appName, rangeWidth)
+		results, _, err := metrics.GetAppCPU(appGroupName, appName, rangeWidth)
 
 		//fmt.Println(warnings)
 		if err != nil {
@@ -80,17 +78,17 @@ func getAvgAppCPU(c *gin.Context) {
 			if len(results) < 1 {
 				c.IndentedJSON(http.StatusNotFound, fmt.Errorf("cpu usage metrics for app %s not found", appName))
 			} else {
-				cpuValues[string(results[0].Metric["container"])] = float64(results[0].Value)
-				c.IndentedJSON(http.StatusOK, cpuValues)
+				c.IndentedJSON(http.StatusOK, float64(results[0].Value))
 			}
 		}
 	} else {
-		results, _, err := metrics.GetAllAvgAppCPU(appGroupName, rangeWidth)
+		results, _, err := metrics.GetAllAppCPU(appGroupName, rangeWidth)
 
 		//fmt.Println(warnings)
 		if err != nil {
 			c.IndentedJSON(http.StatusInternalServerError, err)
 		} else {
+			cpuValues := map[string]float64{}
 			for _, result := range results {
 				cpuValues[string(result.Metric["container"])] = float64(result.Value)
 			}
@@ -99,7 +97,7 @@ func getAvgAppCPU(c *gin.Context) {
 	}
 }
 
-func getAvgAppMemory(c *gin.Context) {
+func getAppMemory(c *gin.Context) {
 	appGroupName := c.Query("app-group")
 	appName := c.Query("app")
 	rangeWidth := c.Query("range-width")
@@ -108,10 +106,8 @@ func getAvgAppMemory(c *gin.Context) {
 		rangeWidth = "5m"
 	}
 
-	memoryValues := map[string]float64{}
-
 	if appName != "" {
-		results, _, err := metrics.GetAvgAppMemory(appGroupName, appName, rangeWidth)
+		results, _, err := metrics.GetAppMemory(appGroupName, appName, rangeWidth)
 
 		//fmt.Println(warnings)
 		if err != nil {
@@ -120,17 +116,17 @@ func getAvgAppMemory(c *gin.Context) {
 			if len(results) < 1 {
 				c.IndentedJSON(http.StatusNotFound, fmt.Errorf("memory usage metrics for app %s not found", appName))
 			} else {
-				memoryValues[string(results[0].Metric["container"])] = float64(results[0].Value)
-				c.IndentedJSON(http.StatusOK, memoryValues)
+				c.IndentedJSON(http.StatusOK, float64(results[0].Value))
 			}
 		}
 	} else {
-		results, _, err := metrics.GetAllAvgAppMemory(appGroupName, rangeWidth)
+		results, _, err := metrics.GetAllAppMemory(appGroupName, rangeWidth)
 
 		//fmt.Println(warnings)
 		if err != nil {
 			c.IndentedJSON(http.StatusInternalServerError, err)
 		} else {
+			memoryValues := map[string]float64{}
 			for _, result := range results {
 				memoryValues[string(result.Metric["container"])] = float64(result.Value)
 			}
@@ -139,7 +135,7 @@ func getAvgAppMemory(c *gin.Context) {
 	}
 }
 
-func getAvgNodeLatencies(c *gin.Context) {
+func getNodeLatencies(c *gin.Context) {
 	nodeName := c.Query("node")
 
 	rangeWidth := c.Query("range-width")
@@ -150,7 +146,7 @@ func getAvgNodeLatencies(c *gin.Context) {
 
 	if nodeName != "" {
 		latencyValues := map[string]float64{}
-		results, _, err := metrics.GetAvgNodeLatencies(nodeName, rangeWidth)
+		results, _, err := metrics.GetNodeLatencies(nodeName, rangeWidth)
 
 		//fmt.Println(warnings)
 		if err != nil {
@@ -163,7 +159,7 @@ func getAvgNodeLatencies(c *gin.Context) {
 		}
 	} else {
 		latencyValues := map[string]map[string]float64{}
-		results, _, err := metrics.GetAllAvgNodeLatencies(rangeWidth)
+		results, _, err := metrics.GetAllNodeLatencies(rangeWidth)
 
 		//fmt.Println(warnings)
 		if err != nil {
@@ -183,10 +179,14 @@ func getAvgNodeLatencies(c *gin.Context) {
 
 func main() {
 	router := gin.Default()
-	router.GET("/metrics/app/avg-traffic", getAvgAppTraffic)
-	router.GET("/metrics/app/avg-cpu", getAvgAppCPU)
-	router.GET("/metrics/app/avg-memory", getAvgAppMemory)
-	router.GET("/metrics/node/avg-latencies", getAvgNodeLatencies)
+	router.GET("/metrics/app/traffic", getAppTraffic)
+	router.GET("/metrics/app/cpu", getAppCPU)
+	router.GET("/metrics/app/memory", getAppMemory)
+	router.GET("/metrics/node/latencies", getNodeLatencies)
 
-	router.Run("0.0.0.0:8080")
+	err := router.Run("0.0.0.0:8080")
+	if err != nil {
+		fmt.Printf("Exiting because of error: %s", err.Error())
+		return
+	}
 }
