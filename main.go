@@ -177,12 +177,86 @@ func getNodesLatencies(c *gin.Context) {
 	}
 }
 
+func getNodesAvailableMemory(c *gin.Context) {
+	nodeName := c.Query("node")
+
+	rangeWidth := c.Query("range-width")
+
+	if rangeWidth == "" {
+		rangeWidth = "5m"
+	}
+
+	if nodeName != "" {
+		results, _, err := metrics.GetNodeAvailableMemory(nodeName, rangeWidth)
+
+		//fmt.Println(warnings)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			memoryValues := map[string]float64{}
+			memoryValues[string(results[0].Metric["kubernetes_node"])] = float64(results[0].Value)
+			c.IndentedJSON(http.StatusOK, memoryValues)
+		}
+	} else {
+		results, _, err := metrics.GetNodesAvailableMemory(rangeWidth)
+
+		//fmt.Println(warnings)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			memoryValues := map[string]float64{}
+			for _, result := range results {
+				memoryValues[string(result.Metric["kubernetes_node"])] = float64(result.Value)
+			}
+			c.IndentedJSON(http.StatusOK, memoryValues)
+		}
+	}
+}
+
+func getNodesAvailableCPU(c *gin.Context) {
+	nodeName := c.Query("node")
+
+	rangeWidth := c.Query("range-width")
+
+	if rangeWidth == "" {
+		rangeWidth = "5m"
+	}
+
+	if nodeName != "" {
+		results, _, err := metrics.GetNodeAvailableCPU(nodeName, rangeWidth)
+
+		//fmt.Println(warnings)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			cpuValues := map[string]float64{}
+			cpuValues[string(results[0].Metric["kubernetes_node"])] = float64(results[0].Value)
+			c.IndentedJSON(http.StatusOK, cpuValues)
+		}
+	} else {
+		results, _, err := metrics.GetNodesAvailableCPU(rangeWidth)
+
+		//fmt.Println(warnings)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			cpuValues := map[string]float64{}
+			for _, result := range results {
+				cpuValues[string(result.Metric["kubernetes_node"])] = float64(result.Value)
+			}
+			c.IndentedJSON(http.StatusOK, cpuValues)
+		}
+	}
+}
+
 func main() {
 	router := gin.Default()
 	router.GET("/metrics/apps/traffic", getAppsTraffic)
 	router.GET("/metrics/apps/cpu-usage", getAppsCPUUsage)
 	router.GET("/metrics/apps/memory-usage", getAppsMemoryUsage)
 	router.GET("/metrics/nodes/latencies", getNodesLatencies)
+	router.GET("/metrics/nodes/available-memory", getNodesAvailableMemory)
+	router.GET("/metrics/nodes/available-cpu", getNodesAvailableCPU)
 
 	err := router.Run("0.0.0.0:8080")
 	if err != nil {

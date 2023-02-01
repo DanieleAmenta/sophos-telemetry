@@ -243,3 +243,103 @@ func GetNodesLatencies(rangeWidth string) (model.Vector, prometheus.Warnings, er
 
 	return vector, warnings, err
 }
+
+func GetNodeAvailableMemory(nodeName, rangeWidth string) (model.Vector, prometheus.Warnings, error) {
+	prometheusClient, err := newPrometheusClient(prometheusAddress)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create metrics client: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	result, warnings, err := prometheusClient.Query(ctx, `
+		(avg_over_time(node_memory_MemAvailable_bytes{kubernetes_node="`+nodeName+`"}[`+rangeWidth+`])) / (1024 * 1024)
+	`, time.Now())
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("error during query execution: %v", err)
+	}
+
+	vector, ok := result.(model.Vector)
+
+	if !ok {
+		return nil, nil, fmt.Errorf("query result is not a vector: %v", err)
+	}
+
+	return vector, warnings, err
+}
+
+func GetNodesAvailableMemory(rangeWidth string) (model.Vector, prometheus.Warnings, error) {
+	prometheusClient, err := newPrometheusClient(prometheusAddress)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create metrics client: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	result, warnings, err := prometheusClient.Query(ctx, `
+		(avg_over_time(node_memory_MemAvailable_bytes[`+rangeWidth+`])) / (1024 * 1024)
+	`, time.Now())
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("error during query execution: %v", err)
+	}
+
+	vector, ok := result.(model.Vector)
+
+	if !ok {
+		return nil, nil, fmt.Errorf("query result is not a vector: %v", err)
+	}
+
+	return vector, warnings, err
+}
+
+func GetNodeAvailableCPU(nodeName, rangeWidth string) (model.Vector, prometheus.Warnings, error) {
+	prometheusClient, err := newPrometheusClient(prometheusAddress)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create metrics client: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	result, warnings, err := prometheusClient.Query(ctx, `
+		1 - avg by (kubernetes_node) (rate(node_cpu_seconds_total{kubernetes_node="`+nodeName+`",mode!="idle"}[`+rangeWidth+`]))
+	`, time.Now())
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("error during query execution: %v", err)
+	}
+
+	vector, ok := result.(model.Vector)
+
+	if !ok {
+		return nil, nil, fmt.Errorf("query result is not a vector: %v", err)
+	}
+
+	return vector, warnings, err
+}
+
+func GetNodesAvailableCPU(rangeWidth string) (model.Vector, prometheus.Warnings, error) {
+	prometheusClient, err := newPrometheusClient(prometheusAddress)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create metrics client: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	result, warnings, err := prometheusClient.Query(ctx, `
+		1 - avg by (kubernetes_node) (rate(node_cpu_seconds_total{mode!="idle"}[`+rangeWidth+`]))
+	`, time.Now())
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("error during query execution: %v", err)
+	}
+
+	vector, ok := result.(model.Vector)
+
+	if !ok {
+		return nil, nil, fmt.Errorf("query result is not a vector: %v", err)
+	}
+
+	return vector, warnings, err
+}
