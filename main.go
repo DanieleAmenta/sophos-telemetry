@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func getAppTraffic(c *gin.Context) {
+func getAppsTraffic(c *gin.Context) {
 	appGroupName := c.Query("app-group")
 	appName := c.Query("app")
 	rangeWidth := c.Query("range-width")
@@ -34,7 +34,7 @@ func getAppTraffic(c *gin.Context) {
 			c.IndentedJSON(http.StatusOK, trafficValues)
 		}
 	} else {
-		results, _, err := metrics.GetAllAppTraffic(appGroupName, rangeWidth)
+		results, _, err := metrics.GetAppsTraffic(appGroupName, rangeWidth)
 
 		//fmt.Println(warnings)
 		if err != nil {
@@ -59,7 +59,7 @@ func getAppTraffic(c *gin.Context) {
 	}
 }
 
-func getAppCPU(c *gin.Context) {
+func getAppsCPUUsage(c *gin.Context) {
 	appGroupName := c.Query("app-group")
 	appName := c.Query("app")
 	rangeWidth := c.Query("range-width")
@@ -69,7 +69,7 @@ func getAppCPU(c *gin.Context) {
 	}
 
 	if appName != "" {
-		results, _, err := metrics.GetAppCPU(appGroupName, appName, rangeWidth)
+		results, _, err := metrics.GetAppCPUUsage(appGroupName, appName, rangeWidth)
 
 		//fmt.Println(warnings)
 		if err != nil {
@@ -82,7 +82,7 @@ func getAppCPU(c *gin.Context) {
 			}
 		}
 	} else {
-		results, _, err := metrics.GetAllAppCPU(appGroupName, rangeWidth)
+		results, _, err := metrics.GetAppsCPUUsage(appGroupName, rangeWidth)
 
 		//fmt.Println(warnings)
 		if err != nil {
@@ -97,7 +97,7 @@ func getAppCPU(c *gin.Context) {
 	}
 }
 
-func getAppMemory(c *gin.Context) {
+func getAppsMemoryUsage(c *gin.Context) {
 	appGroupName := c.Query("app-group")
 	appName := c.Query("app")
 	rangeWidth := c.Query("range-width")
@@ -107,7 +107,7 @@ func getAppMemory(c *gin.Context) {
 	}
 
 	if appName != "" {
-		results, _, err := metrics.GetAppMemory(appGroupName, appName, rangeWidth)
+		results, _, err := metrics.GetAppMemoryUsage(appGroupName, appName, rangeWidth)
 
 		//fmt.Println(warnings)
 		if err != nil {
@@ -120,7 +120,7 @@ func getAppMemory(c *gin.Context) {
 			}
 		}
 	} else {
-		results, _, err := metrics.GetAllAppMemory(appGroupName, rangeWidth)
+		results, _, err := metrics.GetAppsMemoryUsage(appGroupName, rangeWidth)
 
 		//fmt.Println(warnings)
 		if err != nil {
@@ -135,7 +135,7 @@ func getAppMemory(c *gin.Context) {
 	}
 }
 
-func getNodeLatencies(c *gin.Context) {
+func getNodesLatencies(c *gin.Context) {
 	nodeName := c.Query("node")
 
 	rangeWidth := c.Query("range-width")
@@ -159,7 +159,7 @@ func getNodeLatencies(c *gin.Context) {
 		}
 	} else {
 		latencyValues := map[string]map[string]float64{}
-		results, _, err := metrics.GetAllNodeLatencies(rangeWidth)
+		results, _, err := metrics.GetNodesLatencies(rangeWidth)
 
 		//fmt.Println(warnings)
 		if err != nil {
@@ -179,10 +179,10 @@ func getNodeLatencies(c *gin.Context) {
 
 func main() {
 	router := gin.Default()
-	router.GET("/metrics/app/traffic", getAppTraffic)
-	router.GET("/metrics/app/cpu", getAppCPU)
-	router.GET("/metrics/app/memory", getAppMemory)
-	router.GET("/metrics/node/latencies", getNodeLatencies)
+	router.GET("/metrics/apps/traffic", getAppsTraffic)
+	router.GET("/metrics/apps/cpu-usage", getAppsCPUUsage)
+	router.GET("/metrics/apps/memory-usage", getAppsMemoryUsage)
+	router.GET("/metrics/nodes/latencies", getNodesLatencies)
 
 	err := router.Run("0.0.0.0:8080")
 	if err != nil {
